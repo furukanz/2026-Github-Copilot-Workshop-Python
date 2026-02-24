@@ -4,21 +4,39 @@ let state = 'work';
 let remaining = workSeconds;
 let timerInterval = null;
 
-function updateDisplay() {
-    const minutes = Math.floor(remaining / 60);
-    const seconds = remaining % 60;
-    document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
-    document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
-    document.getElementById('state').textContent = state === 'work' ? '作業中' : '休憩中';
+const progressEl = document.getElementById('progress');
+const minutesEl = document.getElementById('minutes');
+const secondsEl = document.getElementById('seconds');
+const statusEl = document.querySelector('.status');
+
+const radius = progressEl.r.baseVal.value;
+const circumference = 2 * Math.PI * radius;
+progressEl.style.strokeDasharray = `${circumference} ${circumference}`;
+progressEl.style.strokeDashoffset = circumference;
+
+function setProgress(remainingSec, totalSec){
+    const offset = circumference * (remainingSec / totalSec);
+    progressEl.style.strokeDashoffset = offset;
 }
 
-function tick() {
-    if (remaining > 0) {
+function updateDisplay(){
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    minutesEl.textContent = String(minutes).padStart(2,'0');
+    secondsEl.textContent = String(seconds).padStart(2,'0');
+    statusEl.textContent = state === 'work' ? '作業中' : '休憩中';
+    const total = state === 'work' ? workSeconds : breakSeconds;
+    setProgress(remaining, total);
+}
+
+function tick(){
+    if (remaining > 0){
         remaining--;
         updateDisplay();
     } else {
         clearInterval(timerInterval);
-        if (state === 'work') {
+        timerInterval = null;
+        if (state === 'work'){
             state = 'break';
             remaining = breakSeconds;
             alert('作業終了！休憩しましょう');
@@ -31,13 +49,13 @@ function tick() {
     }
 }
 
-document.getElementById('start').addEventListener('click', function() {
-    if (!timerInterval) {
+document.getElementById('start').addEventListener('click', function(){
+    if (!timerInterval){
         timerInterval = setInterval(tick, 1000);
     }
 });
 
-document.getElementById('reset').addEventListener('click', function() {
+document.getElementById('reset').addEventListener('click', function(){
     clearInterval(timerInterval);
     timerInterval = null;
     state = 'work';

@@ -1,37 +1,53 @@
-body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+:root{
+    --bg-gradient-start:#6d5df6;
+    --bg-gradient-end:#8a72f8;
+    --card-bg:#f7f6fb;
+    --accent-start:#6f63f4;
+    --accent-end:#7eb0ff;
+    --muted:#9aa0b4;
+    --text:#222;
 }
-.container {
-    background: #fff;
-    padding: 32px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    text-align: center;
+html,body{height:100%;}
+body{
+    margin:0;
+    font-family: "Noto Sans JP", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(135deg,var(--bg-gradient-start),var(--bg-gradient-end));
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
-#timer {
-    font-size: 48px;
-    margin: 16px 0;
+.app-bg{padding:32px}
+.card{
+    width:360px;
+    background:var(--card-bg);
+    border-radius:20px;
+    box-shadow:0 18px 40px rgba(36,20,73,0.25);
+    overflow:visible;
 }
-.buttons button {
-    margin: 8px;
-    padding: 8px 24px;
-    font-size: 16px;
-    border: none;
-    border-radius: 4px;
-    background: #4caf50;
-    color: #fff;
-    cursor: pointer;
-}
-.buttons button:hover {
-    background: #388e3c;
-}
-#state {
-    margin-top: 16px;
-    font-size: 18px;
-    color: #333;
+.card-header{padding:22px 24px 0 24px}
+.card-header h1{margin:0;font-size:20px;color:var(--text);font-weight:700}
+.card-body{padding:8px 24px 18px 24px;text-align:center}
+.status{color:var(--muted);margin-bottom:12px}
+.ring-wrap{position:relative;width:220px;height:220px;margin:0 auto}
+.progress-ring{display:block}
+.ring-bg{stroke:#eef1f6}
+.ring{stroke: url(#) ;}
+.time-center{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:40px;color:var(--text)}
+.controls{margin-top:18px;display:flex;gap:12px;justify-content:center}
+.btn{padding:12px 28px;border-radius:28px;border:0;font-weight:700;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,var(--accent-start),var(--accent-end));color:#fff;box-shadow:0 6px 18px rgba(99,80,255,0.24)}
+.btn.outline{background:transparent;color:var(--accent-start);border:2px solid rgba(126,176,255,0.3)}
+.card-footer{padding:18px 20px 26px 20px}
+.progress-summary{background:#eef2ff;padding:14px;border-radius:12px;display:flex;justify-content:space-between;align-items:center}
+.summary-item{display:flex;flex-direction:column;align-items:flex-start}
+.summary-item .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.summary-item .value{font-size:20px;color:var(--accent-start);font-weight:800}
+.summary-item .sub{font-size:12px;color:var(--muted)}
+
+/* SVG stroke color via CSS variable */
+#progress{stroke: url(#grad);}
+
+/* Responsive tweak */
+@media (max-width:420px){
+    .card{width:320px}
 }
