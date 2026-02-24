@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🍅 Pomodoro Timer</title>
+  <link href="/static/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f0f1a; --card: #1a1a2e; --card2: #16213e;
+      --accent: #e94560; --text: #eaeaea; --muted: #8892a4;
+      --success: #2ecc71; --xp: #f39c12;
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+    .navbar { background: var(--card) !important; border-bottom: 1px solid #2a2a4a; }
+    .navbar-brand { color: var(--accent) !important; font-weight: 700; font-size: 1.4rem; }
+    .nav-link { color: var(--muted) !important; }
+    .nav-link:hover, .nav-link.active-link { color: var(--text) !important; }
+
+    .timer-card { background: var(--card); border-radius: 24px; padding: 2.5rem 2rem; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,.4); }
+    .mode-tabs .btn { background: var(--card2); color: var(--muted); border: none; border-radius: 20px; padding: .4rem 1.2rem; font-size: .85rem; transition: all .2s; }
+    .mode-tabs .btn.active { background: var(--accent); color: #fff; }
+
+    .timer-circle { position: relative; width: 260px; height: 260px; margin: 2rem auto; }
+    .timer-circle svg { transform: rotate(-90deg); }
+    .bg-ring { fill: none; stroke: var(--card2); stroke-width: 12; }
+    .prog-ring { fill: none; stroke: var(--accent); stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+    .timer-circle.break .prog-ring { stroke: var(--success); }
+    .timer-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+    #timer-display { font-size: 3.5rem; font-weight: 700; letter-spacing: 2px; line-height: 1; }
+    #session-label { font-size: .85rem; color: var(--muted); margin-top: .25rem; }
+
+    .timer-controls .btn { border-radius: 50px; padding: .6rem 2rem; font-weight: 600; font-size: 1rem; border: none; }
+    .btn-start { background: var(--accent); color: #fff; }
+    .btn-start:hover { background: #c73652; color: #fff; }
+    .btn-reset { background: var(--card2); color: var(--muted); }
+    .btn-reset:hover { color: var(--text); background: #2a2a4a; }
+
+    .pomo-dots { display: flex; justify-content: center; gap: 8px; margin-top: 1rem; }
+    .pomo-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--card2); border: 2px solid var(--accent); transition: background .3s; }
+    .pomo-dot.done { background: var(--accent); }
+
+    .xp-section, .streak-card, .badges-card { background: var(--card); border-radius: 16px; padding: 1.25rem 1.5rem; }
+    .streak-card { text-align: center; }
+
+    .level-badge { width: 52px; height: 52px; background: linear-gradient(135deg, var(--accent), #ff7f5e); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; flex-shrink: 0; box-shadow: 0 4px 14px rgba(233,69,96,.4); transition: transform .4s; }
+    .xp-bar-wrap { height: 10px; background: var(--card2); border-radius: 10px; overflow: hidden; }
+    .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--xp), #e67e22); border-radius: 10px; transition: width .6s ease; }
+
+    .streak-number { font-size: 2.8rem; font-weight: 800; line-height: 1; background: linear-gradient(135deg, #ff7043, #ffb300); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .badge-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: .75rem .5rem; border-radius: 12px; background: var(--card2); transition: transform .2s, box-shadow .2s; cursor: default; }
+    .badge-item.earned { background: linear-gradient(135deg, #1a2a4a, #0f3460); box-shadow: 0 4px 12px rgba(15,52,96,.5); }
+    .badge-item.earned:hover { transform: translateY(-3px); }
+    .badge-icon { font-size: 2rem; filter: grayscale(1) opacity(.3); transition: filter .3s; }
+    .badge-item.earned .badge-icon { filter: none; }
+    .badge-name { font-size: .7rem; color: var(--muted); text-align: center; line-height: 1.2; }
+    .badge-item.earned .badge-name { color: var(--text); }
+
+    .section-title { font-size: .8rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: .75rem; }
+
+    #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; gap: .75rem; }
+    .toast-msg { background: var(--card); border-left: 4px solid var(--accent); padding: 1rem 1.5rem; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.4); min-width: 280px; animation: slideIn .3s ease; }
+    .toast-msg.badge-toast { border-left-color: var(--xp); }
+    .toast-msg.level-toast { border-left-color: var(--success); }
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
+    .toast-out { animation: slideOut .3s ease forwards; }
+
+    @media (max-width: 576px) {
+      #timer-display { font-size: 2.8rem; }
+      .timer-circle { width: 220px; height: 220px; }
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <span class="navbar-brand">🍅 Pomodoro</span>
+    <div class="d-flex gap-3">
+      <a href="/" class="nav-link active-link">Timer</a>
+      <a href="/stats" class="nav-link">📊 Stats</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+  <div class="row g-4">
+    <!-- Timer -->
+    <div class="col-lg-5">
+      <div class="timer-card">
+        <div class="mode-tabs d-flex justify-content-center gap-2 mb-2">
+          <button class="btn active" id="btn-work" onclick="switchMode('work')">Work</button>
+          <button class="btn" id="btn-short" onclick="switchMode('short')">Short Break</button>
+          <button class="btn" id="btn-long" onclick="switchMode('long')">Long Break</button>
+        </div>
+
+        <div class="timer-circle" id="timer-circle">
+          <svg width="260" height="260" viewBox="0 0 260 260">
+            <circle class="bg-ring" cx="130" cy="130" r="114" />
+            <circle class="prog-ring" id="progress-arc" cx="130" cy="130" r="114"
+                    stroke-dasharray="716.28" stroke-dashoffset="0" />
+          </svg>
+          <div class="timer-text">
+            <div id="timer-display">25:00</div>
+            <div id="session-label">Focus Time</div>
+          </div>
+        </div>
+
+        <div class="pomo-dots">
+          <div class="pomo-dot" id="dot-0"></div>
+          <div class="pomo-dot" id="dot-1"></div>
+          <div class="pomo-dot" id="dot-2"></div>
+          <div class="pomo-dot" id="dot-3"></div>
+        </div>
+
+        <div class="timer-controls d-flex justify-content-center gap-3 mt-4">
+          <button class="btn btn-start" id="btn-start-pause" onclick="toggleTimer()">▶ Start</button>
+          <button class="btn btn-reset" onclick="resetTimer()">↺ Reset</button>
+        </div>
+
+        <div class="mt-3" style="color:var(--muted);font-size:.9rem;">
+          Today: <span id="today-count" style="color:var(--text);font-weight:600;">{{ today_count }}</span> 🍅
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div class="col-lg-7 d-flex flex-column gap-4">
+      <!-- XP -->
+      <div class="xp-section">
+        <div class="section-title">Experience</div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="level-badge" id="level-badge">{{ level }}</div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between mb-1">
+              <span style="font-size:.9rem;color:var(--muted);">Level <span id="level-text">{{ level }}</span></span>
+              <span style="font-size:.85rem;color:var(--xp);" id="xp-label">{{ user.total_xp }} XP &middot; {{ xp_next }} to next</span>
+            </div>
+            <div class="xp-bar-wrap">
+              <div class="xp-bar-fill" id="xp-bar" style="width:{{ xp_pct }}%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Streak -->
+      <div class="streak-card">
+        <div class="section-title">Current Streak</div>
+        <div class="d-flex align-items-center justify-content-center gap-3">
+          <div class="streak-number" id="streak-number">{{ user.current_streak }}</div>
+          <div><div style="font-size:2rem;">🔥</div><div style="font-size:.8rem;color:var(--muted);">days</div></div>
+        </div>
+        <div style="font-size:.85rem;color:var(--muted);margin-top:.5rem;">
+          Longest: <strong style="color:var(--text);" id="longest-streak">{{ user.longest_streak }}</strong> days
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="badges-card flex-grow-1">
+        <div class="section-title">Badges</div>
+        <div class="row row-cols-4 g-2" id="badges-grid">
+          {% for b in badges %}
+          <div class="col">
+            <div class="badge-item {% if b.earned %}earned{% endif %}" data-badge-id="{{ b.id }}" title="{{ b.description }}">
+              <div class="badge-icon">{{ b.icon }}</div>
+              <div class="badge-name">{{ b.name }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+  const MODES = {
+    work:  { label: 'Focus Time',  seconds: 25*60, isBreak: false },
+    short: { label: 'Short Break', seconds:  5*60, isBreak: true  },
+    long:  { label: 'Long Break',  seconds: 15*60, isBreak: true  },
+  };
+  const CIRC = 716.28;
+
+  let currentMode   = 'work';
+  let totalSecs     = MODES.work.seconds;
+  let remaining     = totalSecs;
+  let running       = false;
+  let ivId          = null;
+  let pomoCycle     = 0;
+
+  const display     = document.getElementById('timer-display');
+  const sessLabel   = document.getElementById('session-label');
+  const startBtn    = document.getElementById('btn-start-pause');
+  const arcEl       = document.getElementById('progress-arc');
+  const circleEl    = document.getElementById('timer-circle');
+  const xpBar       = document.getElementById('xp-bar');
+  const xpLabel     = document.getElementById('xp-label');
+  const levelBadge  = document.getElementById('level-badge');
+  const levelText   = document.getElementById('level-text');
+  const streakNum   = document.getElementById('streak-number');
+  const longestStr  = document.getElementById('longest-streak');
+  const todayCount  = document.getElementById('today-count');
+
+  function switchMode(mode) {
+    if (running) stopTimer();
+    currentMode = mode;
+    totalSecs   = MODES[mode].seconds;
+    remaining   = totalSecs;
+    sessLabel.textContent = MODES[mode].label;
+    circleEl.classList.toggle('break', MODES[mode].isBreak);
+    document.querySelectorAll('.mode-tabs .btn').forEach(b => b.classList.remove('active'));
+    const btnId = mode === 'work' ? 'btn-work' : mode === 'short' ? 'btn-short' : 'btn-long';
+    document.getElementById(btnId).classList.add('active');
+    updateDisplay(); updateArc();
+  }
+
+  function toggleTimer() {
+    running ? stopTimer() : startTimer();
+  }
+
+  function startTimer() {
+    running = true;
+    startBtn.textContent = '⏸ Pause';
+    ivId = setInterval(tick, 1000);
+  }
+
+  function stopTimer() {
+    running = false;
+    startBtn.textContent = '▶ Start';
+    clearInterval(ivId); ivId = null;
+  }
+
+  function resetTimer() {
+    stopTimer();
+    remaining = totalSecs;
+    updateDisplay(); updateArc();
+  }
+
+  function tick() {
+    if (remaining <= 0) { stopTimer(); onSessionComplete(); return; }
+    remaining--;
+    updateDisplay(); updateArc();
+  }
+
+  function updateDisplay() {
+    const m = String(Math.floor(remaining / 60)).padStart(2,'0');
+    const s = String(remaining % 60).padStart(2,'0');
+    display.textContent = m + ':' + s;
+  }
+
+  function updateArc() {
+    arcEl.style.strokeDashoffset = CIRC * (1 - remaining / totalSecs);
+  }
+
+  async function onSessionComplete() {
+    if (currentMode !== 'work') {
+      showToast('Break over! Time to focus 💪', '');
+      switchMode('work');
+      return;
+    }
+    pomoCycle = (pomoCycle + 1) % 4;
+    updateDots();
+    try { playBeep(); } catch(e) {}
+
+    try {
+      const resp = await fetch('/complete', { method: 'POST' });
+      const data = await resp.json();
+      handleReward(data);
+      const next = (pomoCycle === 0) ? 'long' : 'short';
+      setTimeout(() => switchMode(next), 1500);
+    } catch(err) {
+      showToast('Warning: Could not save session to server', '');
+    }
+  }
+
+  function handleReward(data) {
+    todayCount.textContent = data.today_count;
+    xpBar.style.width = data.xp_pct + '%';
+    xpLabel.textContent = data.total_xp + ' XP · ' + data.xp_next + ' to next';
+    streakNum.textContent = data.current_streak;
+    if (data.leveled_up) {
+      levelBadge.textContent = data.level;
+      levelText.textContent = data.level;
+      levelBadge.style.transform = 'scale(1.4)';
+      setTimeout(() => { levelBadge.style.transform = 'scale(1)'; }, 500);
+      showToast('🎉 Level Up! You are now Level ' + data.level + '!', 'level-toast');
+    }
+    showToast('+' + data.xp_gained + ' XP &nbsp; ' + data.message, '');
+    data.new_badges.forEach(badge => {
+      showToast(badge.icon + ' Badge Unlocked: <strong>' + badge.name + '</strong><br><small>' + badge.description + '</small>', 'badge-toast');
+      const el = document.querySelector('[data-badge-id="' + badge.id + '"]');
+      if (el) el.classList.add('earned');
+    });
+  }
+
+  function updateDots() {
+    for (let i = 0; i < 4; i++) {
+      document.getElementById('dot-' + i).classList.toggle('done', i < pomoCycle);
+    }
+  }
+
+  function showToast(html, extra) {
+    const c = document.getElementById('toast-container');
+    const d = document.createElement('div');
+    d.className = 'toast-msg ' + (extra || '');
+    d.innerHTML = html;
+    c.appendChild(d);
+    setTimeout(() => {
+      d.classList.add('toast-out');
+      setTimeout(() => d.remove(), 350);
+    }, 4000);
+  }
+
+  function playBeep() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880; osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.8);
+  }
+
+  updateDisplay(); updateArc();
+</script>
+<script src="/static/bootstrap.bundle.min.js"></script>
+</body>
+</html>

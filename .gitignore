@@ -25,3 +25,7 @@ Thumbs.db
 
 # Flask
 instance/
+
+# Auto-generated package files from local dependency installation
+package.json
+package-lock.json
