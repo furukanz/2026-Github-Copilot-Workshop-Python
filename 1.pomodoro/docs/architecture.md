@@ -1,49 +1,58 @@
-# ポモドーロタイマーWebアプリ アーキテクチャ案
+# ポモドーロタイマーWebアプリ アーキテクチャ
 
 ## 1. ディレクトリ構成
 
 ```
 1.pomodoro/
-  app.py           # Flaskアプリ本体
-  timer.py         # タイマーのビジネスロジック
-  history.py       # 履歴管理ロジック
-  templates/       # HTMLテンプレート
-    index.html
+  app.py             # Flask アプリケーションエントリポイント
+  timer.py           # タイマービジネスロジック（PomodoroTimer クラス）
+  templates/
+    index.html       # メイン画面 HTML テンプレート
   static/
     css/
-      style.css    # デザイン
+      style.css      # スタイルシート
     js/
-      timer.js     # タイマー制御
-  tests/           # ユニットテスト
-    test_timer.py
-    test_history.py
-    test_app.py
+      timer.js       # フロントエンドタイマー制御
+  docs/              # ドキュメント
+tests/
+  test_timer.py      # PomodoroTimer ユニットテスト
 ```
 
 ## 2. アーキテクチャ概要
 
 ### バックエンド（Flask）
-- タイマーや履歴管理などのロジックを独立したモジュール（timer.py, history.py）で実装
-- APIエンドポイント（タイマー操作、履歴取得など）をRESTfulに設計
-- 設定値や履歴の保存は抽象化したインターフェース経由でアクセス
+
+- `app.py` — Flask アプリケーションを生成し、ルートパス（`/`）で `index.html` を返す単一ルート構成
+- `timer.py` — `PomodoroTimer` クラスによるタイマーのビジネスロジックをバックエンド側で定義（現状はフロントエンドと独立）
+
+現時点では REST API エンドポイントは存在せず、Flask はテンプレート配信のみを担当しています。
 
 ### フロントエンド（HTML/CSS/JavaScript）
-- UIモックに基づく画面構成（タイマー表示、ボタン、進捗バーなど）
-- JavaScriptでタイマー制御（カウントダウン、アラート、状態切替）
-- AjaxでFlask APIと通信（設定変更や履歴取得）
-- UIはレスポンシブ対応
 
-## 3. ユニットテストのしやすさへの配慮
-- ビジネスロジックをFlaskルートやビューから分離し、直接ユニットテスト可能な構成
-- テスト用ディレクトリ（tests/）を設置し、pytest等で自動テスト
-- モックやスタブを使ったテストが容易な抽象化
-- JavaScriptもモジュール化し、Jest等で単体テスト可能
+- `templates/index.html` — タイマー表示・ボタン（開始・リセット）・状態表示を含むシンプルなページ
+- `static/js/timer.js` — ブラウザ上でカウントダウン・状態切替・アラート通知を完結させるバニラ JavaScript（サーバー通信なし）
+- `static/css/style.css` — 中央配置・カード型レイアウトのスタイリング
 
-## 4. 拡張性
-- ユーザー認証（必要ならFlask-Login等）
-- 履歴保存（SQLiteやファイル、セッション）
-- 設定画面や通知機能
+## 3. レイヤー間の依存関係
 
----
+```
+ブラウザ（timer.js）  ←→  Flask（app.py）  ←  timer.py（独立モジュール）
+```
 
-このアーキテクチャは、シンプルかつ拡張しやすく、ユニットテストのしやすさにも配慮した構成です。
+- `timer.js` はサーバーと通信せず、すべてのタイマーロジックをブラウザ内で処理します。
+- `timer.py` の `PomodoroTimer` クラスはバックエンドテスト用に定義されており、現在は Flask ルートからは参照されていません。
+
+## 4. テスト構成
+
+- `tests/test_timer.py` — `PomodoroTimer` クラスのユニットテスト（pytest）
+- テスト実行コマンド:
+
+```bash
+pytest -q tests
+```
+
+## 5. 拡張の方向性
+
+- REST API 化（タイマー状態のサーバー管理、履歴保存など）
+- `timer.py` を Flask ルートに統合し、バックエンドでタイマーを管理
+- 設定画面、ブラウザ通知、履歴表示などの UI 拡張
