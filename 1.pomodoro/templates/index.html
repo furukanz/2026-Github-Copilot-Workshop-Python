@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ポモドーロタイマー</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body class="theme-dark" id="app-body">
+  <div class="container">
+    <h1>🍅 ポモドーロタイマー</h1>
+
+    <!-- Timer Display -->
+    <div class="timer-display" id="timer-display">25:00</div>
+    <div class="mode-label" id="mode-label">作業時間</div>
+
+    <!-- Timer Controls -->
+    <div class="controls">
+      <button id="btn-start" class="btn btn-primary" onclick="startTimer()">▶ 開始</button>
+      <button id="btn-pause" class="btn btn-secondary" onclick="pauseTimer()" disabled>⏸ 一時停止</button>
+      <button id="btn-reset" class="btn btn-secondary" onclick="resetTimer()">↺ リセット</button>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel">
+
+      <!-- Work Time Selection -->
+      <div class="setting-group">
+        <label class="setting-label">⏱ 作業時間</label>
+        <div class="option-buttons" id="work-options">
+          <button class="opt-btn" data-value="15" onclick="setWorkTime(15)">15分</button>
+          <button class="opt-btn active" data-value="25" onclick="setWorkTime(25)">25分</button>
+          <button class="opt-btn" data-value="35" onclick="setWorkTime(35)">35分</button>
+          <button class="opt-btn" data-value="45" onclick="setWorkTime(45)">45分</button>
+        </div>
+      </div>
+
+      <!-- Break Time Selection -->
+      <div class="setting-group">
+        <label class="setting-label">☕ 休憩時間</label>
+        <div class="option-buttons" id="break-options">
+          <button class="opt-btn active" data-value="5" onclick="setBreakTime(5)">5分</button>
+          <button class="opt-btn" data-value="10" onclick="setBreakTime(10)">10分</button>
+          <button class="opt-btn" data-value="15" onclick="setBreakTime(15)">15分</button>
+        </div>
+      </div>
+
+      <!-- Theme Selection -->
+      <div class="setting-group">
+        <label class="setting-label">🎨 テーマ</label>
+        <div class="option-buttons" id="theme-options">
+          <button class="opt-btn active" data-value="dark" onclick="setTheme('dark')">ダーク</button>
+          <button class="opt-btn" data-value="light" onclick="setTheme('light')">ライト</button>
+          <button class="opt-btn" data-value="focus" onclick="setTheme('focus')">フォーカス</button>
+        </div>
+      </div>
+
+      <!-- Sound Settings -->
+      <div class="setting-group">
+        <label class="setting-label">🔊 サウンド設定</label>
+        <div class="sound-toggles">
+          <label class="toggle-label">
+            <input type="checkbox" id="sound-start" checked />
+            <span class="toggle-track"></span>
+            開始音
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="sound-end" checked />
+            <span class="toggle-track"></span>
+            終了音
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="sound-tick" />
+            <span class="toggle-track"></span>
+            tick音
+          </label>
+        </div>
+      </div>
+
+    </div><!-- /settings-panel -->
+
+    <!-- Session Info -->
+    <div class="session-info">
+      <span>完了セッション: <strong id="session-count">0</strong></span>
+    </div>
+  </div>
+
+  <script src="/static/js/timer.js"></script>
+</body>
+</html>

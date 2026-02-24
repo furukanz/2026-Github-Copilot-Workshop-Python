@@ -1,0 +1,264 @@
+/* ===== CSS Variables / Themes ===== */
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --surface2: #0f3460;
+  --primary: #e94560;
+  --primary-hover: #c73652;
+  --text: #eaeaea;
+  --text-muted: #aaaaaa;
+  --opt-active-bg: var(--primary);
+  --opt-active-text: #ffffff;
+  --opt-bg: var(--surface2);
+  --opt-text: var(--text);
+  --border: rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --timer-color: #ffffff;
+  --toggle-on: var(--primary);
+  --toggle-off: #555;
+}
+
+body.theme-light {
+  --bg: #f5f5f5;
+  --surface: #ffffff;
+  --surface2: #e8e8e8;
+  --primary: #d63031;
+  --primary-hover: #b02020;
+  --text: #222222;
+  --text-muted: #666666;
+  --opt-bg: #dddddd;
+  --opt-text: #333333;
+  --border: rgba(0, 0, 0, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --timer-color: #222222;
+  --toggle-off: #bbb;
+}
+
+body.theme-focus {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #21262d;
+  --primary: #58a6ff;
+  --primary-hover: #388bfd;
+  --text: #c9d1d9;
+  --text-muted: #8b949e;
+  --opt-bg: var(--surface2);
+  --opt-text: var(--text);
+  --border: rgba(255, 255, 255, 0.08);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --timer-color: #58a6ff;
+  --toggle-off: #444;
+}
+
+/* ===== Base ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ===== Container ===== */
+.container {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 40px 50px;
+  box-shadow: var(--shadow);
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  border: 1px solid var(--border);
+  transition: background 0.3s;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin-bottom: 30px;
+  letter-spacing: 0.05em;
+}
+
+/* ===== Timer Display ===== */
+.timer-display {
+  font-size: 5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--timer-color);
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+
+.mode-label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ===== Controls ===== */
+.controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s, transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+/* ===== Settings Panel ===== */
+.settings-panel {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setting-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ===== Option Buttons ===== */
+.option-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.opt-btn {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  background: var(--opt-bg);
+  color: var(--opt-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.opt-btn:hover {
+  filter: brightness(1.15);
+}
+
+.opt-btn.active {
+  background: var(--opt-active-bg);
+  color: var(--opt-active-text);
+  border-color: var(--opt-active-bg);
+}
+
+/* ===== Toggle Switches ===== */
+.sound-toggles {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.toggle-label input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-track {
+  width: 36px;
+  height: 20px;
+  background: var(--toggle-off);
+  border-radius: 20px;
+  position: relative;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.25s;
+}
+
+.toggle-label input:checked + .toggle-track {
+  background: var(--toggle-on);
+}
+
+.toggle-label input:checked + .toggle-track::after {
+  transform: translateX(16px);
+}
+
+/* ===== Session Info ===== */
+.session-info {
+  margin-top: 24px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
