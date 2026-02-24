@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ポモドーロタイマー</title>
+  <style>
+    /* ===== Base Reset ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #0d1117;
+      color: #e6edf3;
+      transition: background 1s ease;
+    }
+
+    /* ===== Particle Canvas ===== */
+    #particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+    body.running #particles { opacity: 1; }
+
+    /* ===== Ripple overlay ===== */
+    #ripple-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      transform: scale(0);
+      animation: ripple-expand 4s ease-out forwards;
+      opacity: 0.15;
+    }
+    @keyframes ripple-expand {
+      to { transform: scale(6); opacity: 0; }
+    }
+
+    /* ===== Main container ===== */
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 20px var(--accent, #58a6ff);
+      transition: text-shadow 1s ease, color 1s ease;
+    }
+
+    /* ===== Mode Tabs ===== */
+    .tabs {
+      display: flex;
+      gap: 10px;
+    }
+    .tab {
+      padding: 6px 18px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      background: rgba(255,255,255,0.07);
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s;
+    }
+    .tab.active, .tab:hover {
+      background: rgba(255,255,255,0.14);
+      color: var(--accent, #58a6ff);
+      border-color: var(--accent, #58a6ff);
+    }
+
+    /* ===== Circular Progress ===== */
+    .timer-ring-wrapper {
+      position: relative;
+      width: 280px;
+      height: 280px;
+    }
+    .timer-ring-wrapper svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .ring-bg {
+      fill: none;
+      stroke: rgba(255,255,255,0.08);
+      stroke-width: 12;
+    }
+    .ring-progress {
+      fill: none;
+      stroke: var(--accent, #58a6ff);
+      stroke-width: 12;
+      stroke-linecap: round;
+      /* circumference set by JS */
+      stroke-dasharray: 0;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke 1s ease;
+      filter: drop-shadow(0 0 10px var(--accent, #58a6ff));
+    }
+
+    /* Glow pulse on the ring while running */
+    body.running .ring-progress {
+      animation: ring-glow 2s ease-in-out infinite alternate;
+    }
+    @keyframes ring-glow {
+      from { filter: drop-shadow(0 0 8px var(--accent, #58a6ff)); }
+      to   { filter: drop-shadow(0 0 22px var(--accent, #58a6ff)); }
+    }
+
+    .timer-display {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .timer-text {
+      font-size: 3.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      color: #e6edf3;
+      transition: color 1s ease;
+    }
+    .timer-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--accent, #58a6ff);
+      transition: color 1s ease;
+    }
+
+    /* ===== Buttons ===== */
+    .controls {
+      display: flex;
+      gap: 14px;
+    }
+    .btn {
+      padding: 12px 36px;
+      border-radius: 30px;
+      border: 2px solid var(--accent, #58a6ff);
+      background: transparent;
+      color: var(--accent, #58a6ff);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      background: var(--accent, #58a6ff);
+      color: #0d1117;
+      box-shadow: 0 0 20px var(--accent, #58a6ff);
+    }
+    .btn.primary {
+      background: var(--accent, #58a6ff);
+      color: #0d1117;
+    }
+    .btn.primary:hover {
+      box-shadow: 0 0 28px var(--accent, #58a6ff);
+    }
+
+    /* Session counter */
+    .sessions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #8b949e;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      transition: background 0.5s;
+    }
+    .dot.done { background: var(--accent, #58a6ff); }
+
+    /* ===== Color themes based on phase ===== */
+    body[data-phase="focus"]       { --accent: #58a6ff; }
+    body[data-phase="warning"]     { --accent: #f0b429; }
+    body[data-phase="danger"]      { --accent: #f85149; }
+    body[data-phase="short-break"] { --accent: #3fb950; }
+    body[data-phase="long-break"]  { --accent: #bc8cff; }
+  </style>
+</head>
+<body data-phase="focus">
+  <!-- Particle canvas -->
+  <canvas id="particles"></canvas>
+  <!-- Ripple container -->
+  <div id="ripple-container"></div>
+
+  <div class="container">
+    <h1>🍅 ポモドーロタイマー</h1>
+
+    <!-- Mode tabs -->
+    <div class="tabs">
+      <button class="tab active" data-mode="pomodoro">集中</button>
+      <button class="tab" data-mode="short-break">短い休憩</button>
+      <button class="tab" data-mode="long-break">長い休憩</button>
+    </div>
+
+    <!-- Circular progress ring -->
+    <div class="timer-ring-wrapper">
+      <svg viewBox="0 0 280 280">
+        <circle class="ring-bg"       cx="140" cy="140" r="120" />
+        <circle class="ring-progress" cx="140" cy="140" r="120" id="ring" />
+      </svg>
+      <div class="timer-display">
+        <div class="timer-text" id="timer-text">25:00</div>
+        <div class="timer-label" id="timer-label">集中時間</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="btn primary" id="start-btn">スタート</button>
+      <button class="btn" id="reset-btn">リセット</button>
+    </div>
+
+    <!-- Session dots -->
+    <div class="sessions" id="sessions">
+      <span>セッション:</span>
+      <div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div>
+      <div class="dot" id="d4"></div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    // ── Constants ─────────────────────────────────────────────
+    const MAX_SESSIONS      = 4;    // session dots shown before cycling
+    const MAX_PARTICLES     = 80;   // max live particles
+    const RIPPLE_INTERVAL_MS= 2000; // ms between ripple spawns
+
+    // ── Config (fetched from backend; fallback values match server defaults) ──
+    const DURATIONS = { pomodoro: 25*60, "short-break": 5*60, "long-break": 15*60 };
+    const LABELS    = { pomodoro: "集中時間", "short-break": "短い休憩", "long-break": "長い休憩" };
+
+    fetch('/api/config').then(r => r.json()).then(cfg => {
+      DURATIONS.pomodoro      = cfg.pomodoro;
+      DURATIONS['short-break']= cfg.shortBreak;
+      DURATIONS['long-break'] = cfg.longBreak;
+      reset();
+    }).catch(err => {
+      console.warn('設定の取得に失敗しました。デフォルト値を使用します。', err);
+      reset();
+    });
+
+    // ── State ─────────────────────────────────────────────────
+    let mode       = 'pomodoro';
+    let total      = DURATIONS[mode];
+    let remaining  = total;
+    let running    = false;
+    let intervalId = null;
+    let sessions   = 0;
+
+    // ── DOM refs ──────────────────────────────────────────────
+    const body       = document.body;
+    const ring       = document.getElementById('ring');
+    const timerText  = document.getElementById('timer-text');
+    const timerLabel = document.getElementById('timer-label');
+    const startBtn   = document.getElementById('start-btn');
+    const resetBtn   = document.getElementById('reset-btn');
+    const dots       = Array.from({length: MAX_SESSIONS}, (_, i) => document.getElementById('d'+(i+1)));
+
+    // ── SVG ring setup ────────────────────────────────────────
+    const R = 120;
+    const CIRCUMFERENCE = 2 * Math.PI * R;
+    ring.style.strokeDasharray  = CIRCUMFERENCE;
+    ring.style.strokeDashoffset = 0;
+
+    function setRingProgress(ratio) {
+      // ratio 1 = full, 0 = empty
+      ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - ratio);
+    }
+
+    // ── Color phase logic ─────────────────────────────────────
+    function updatePhase() {
+      if (mode !== 'pomodoro') {
+        body.dataset.phase = mode;
+        return;
+      }
+      const pct = remaining / total;
+      if      (pct > 0.5)  body.dataset.phase = 'focus';
+      else if (pct > 0.25) body.dataset.phase = 'warning';
+      else                  body.dataset.phase = 'danger';
+    }
+
+    // ── Timer display ─────────────────────────────────────────
+    function formatTime(s) {
+      const m = Math.floor(s / 60).toString().padStart(2, '0');
+      const ss = (s % 60).toString().padStart(2, '0');
+      return `${m}:${ss}`;
+    }
+
+    function updateDisplay() {
+      timerText.textContent  = formatTime(remaining);
+      timerLabel.textContent = LABELS[mode];
+      setRingProgress(remaining / total);
+      updatePhase();
+      dots.forEach((d, i) => d.classList.toggle('done', i < sessions % MAX_SESSIONS));
+    }
+
+    // ── Start / Pause ─────────────────────────────────────────
+    function startPause() {
+      if (running) {
+        clearInterval(intervalId);
+        running = false;
+        body.classList.remove('running');
+        startBtn.textContent = 'スタート';
+        stopRipple();
+      } else {
+        running = true;
+        body.classList.add('running');
+        startBtn.textContent = 'ポーズ';
+        startRipple();
+        intervalId = setInterval(() => {
+          remaining--;
+          updateDisplay();
+          if (remaining <= 0) {
+            clearInterval(intervalId);
+            running = false;
+            body.classList.remove('running');
+            startBtn.textContent = 'スタート';
+            stopRipple();
+            if (mode === 'pomodoro') sessions++;
+            updateDisplay();
+            // Pulse flash on finish
+            flashComplete();
+          }
+        }, 1000);
+      }
+    }
+
+    function reset() {
+      clearInterval(intervalId);
+      running = false;
+      body.classList.remove('running');
+      startBtn.textContent = 'スタート';
+      stopRipple();
+      total     = DURATIONS[mode];
+      remaining = total;
+      updateDisplay();
+    }
+
+    function flashComplete() {
+      body.style.transition = 'background 0.2s';
+      body.style.background = 'rgba(255,255,255,0.12)';
+      setTimeout(() => { body.style.background = ''; body.style.transition = ''; }, 400);
+    }
+
+    // ── Mode tabs ─────────────────────────────────────────────
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        mode = tab.dataset.mode;
+        reset();
+      });
+    });
+
+    // ── Button events ─────────────────────────────────────────
+    startBtn.addEventListener('click', startPause);
+    resetBtn.addEventListener('click', reset);
+
+    // ── Particles ─────────────────────────────────────────────
+    const canvas = document.getElementById('particles');
+    const ctx    = canvas.getContext('2d');
+    let particles = [];
+    let rafId = null;
+
+    function resizeCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function randomParticle() {
+      return {
+        x:    Math.random() * canvas.width,
+        y:    canvas.height + Math.random() * 20,
+        vx:   (Math.random() - 0.5) * 0.8,
+        vy:   -(0.4 + Math.random() * 0.8),
+        size: 1.5 + Math.random() * 2.5,
+        alpha: 0.6 + Math.random() * 0.4,
+        life:  0,
+        maxLife: 120 + Math.random() * 180,
+      };
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // spawn
+      if (particles.length < MAX_PARTICLES && running) {
+        for (let i = 0; i < 2; i++) particles.push(randomParticle());
+      }
+
+      const accentColor = getComputedStyle(body).getPropertyValue('--accent').trim() || '#58a6ff';
+
+      particles = particles.filter(p => p.life < p.maxLife);
+      particles.forEach(p => {
+        p.x   += p.vx;
+        p.y   += p.vy;
+        p.life++;
+        const progress = p.life / p.maxLife;
+        const alpha = p.alpha * (1 - progress);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * (1 - progress * 0.5), 0, Math.PI * 2);
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = alpha;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+
+      rafId = requestAnimationFrame(animateParticles);
+    }
+
+    // ── Ripple effect ─────────────────────────────────────────
+    const rippleCont = document.getElementById('ripple-container');
+    let rippleTimer = null;
+
+    function spawnRipple() {
+      const el = document.createElement('div');
+      el.className = 'ripple';
+      const size = 60 + Math.random() * 80;
+      el.style.cssText = `
+        width:${size}px; height:${size}px;
+        left:${Math.random()*100}%; top:${Math.random()*100}%;
+        transform-origin: center center;
+        background: var(--accent, #58a6ff);
+        animation-duration: ${3 + Math.random()*2}s;
+      `;
+      rippleCont.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }
+
+    function startRipple() {
+      spawnRipple();
+      rippleTimer = setInterval(spawnRipple, RIPPLE_INTERVAL_MS);
+      rafId = rafId || requestAnimationFrame(animateParticles);
+    }
+
+    function stopRipple() {
+      clearInterval(rippleTimer);
+      rippleTimer = null;
+      // let existing ripples finish naturally
+    }
+
+    // Start the particle loop immediately (renders even when paused for idle beauty)
+    rafId = requestAnimationFrame(animateParticles);
+
+    // ── Initial render ────────────────────────────────────────
+    updateDisplay();
+  })();
+  </script>
+</body>
+</html>
